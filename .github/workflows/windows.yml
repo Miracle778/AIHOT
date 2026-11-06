@@ -6,6 +6,20 @@ name: Windows
 on:
   push:
     branches: [codeagent-intel]
+    # 只在动了会影响运行的文件时跑（后端测试在 Windows 上要二十多分钟）；只改文档不跑。也可以手动触发。
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "modules/**"
+      - "industry/**"
+      - "site/**"
+      - "scripts/**"
+      - "database/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".gitattributes"
+      - ".github/workflows/windows.yml"
   workflow_dispatch:
 
 permissions:

@@ -70,6 +70,10 @@ docker compose up -d --build
 
 打开 `http://localhost:3000`，后台在 `/admin`。第一次启动会导入上面的信源，先去后台“信源”页确认都抓成功了。
 
+### 部署到 Windows（不用 Docker、不用 WSL）
+
+见 [在 Windows 上直接部署](windows.md)：PostgreSQL 用官方安装包，三个进程用 Node 直接跑、pm2 守护（`deploy/windows/ecosystem.config.cjs`）。每次推送到这个分支，GitHub 都会在 Windows 机器上跑一遍类型检查、构建、全部后端测试和站点冒烟检查（`.github/workflows/windows.yml`）。
+
 ### 部署到公司内网
 
 - 模型走内网服务：把 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL` 改成内网 DeepSeek 或 GLM 网关的地址（OpenAI 兼容接口即可）。GLM 这类推理模型要设 `LLM_REASONING_TOKENS`（比如 4000），否则推理会占满输出额度、答案为空。也可以一步一个模型，比如评分用 GLM、其余用 DeepSeek，见 `.env.example` 的“每一步单独换模型”。
