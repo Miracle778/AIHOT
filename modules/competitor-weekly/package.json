@@ -1,0 +1,19 @@
+{
+  "name": "@aihot/competitor-weekly",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./module": "./module.ts",
+    "./server": "./server.ts",
+    "./web": "./web.tsx",
+    "./*": "./*.ts"
+  },
+  "dependencies": {
+    "@aihot/api": "*",
+    "@aihot/backend": "*",
+    "@aihot/contracts": "*",
+    "@aihot/industry": "*",
+    "@aihot/site": "*",
+    "zod": "4.6.6"
+  }
+}

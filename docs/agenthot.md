@@ -42,6 +42,17 @@
   - 术语上 Agent、Harness、Skills 保留英文。
 - `site/site.ts`：站名 AgentHot，行业词“竞品”（页面上显示“竞品日报”“竞品动态”），MCP 工具前缀 `agenthot_`。报头字（`site/brand/nameplates/`）已重新生成。
 
+## 竞品周汇总（modules/competitor-weekly）
+
+高频小步发版的竞品（Claude Code 几乎每天一个版本）单条很难过精选门槛，一周累积下来的变化却很重要。这个模块每周为每个竞品把一周的全部动态（不只是精选）写成一句总结加 3–6 条主要变化，每条都链回原始条目：
+
+- 页面：`/competitors/weekly`（最新一周）和 `/competitors/weekly/2026-W45`（指定一周），侧栏“竞品”下的“竞品周汇总”。
+- 竞品主题页顶部显示它最近一周的汇总。
+- 定时任务 `competitor-weekly.compose` 每小时检查一次：上一个完整周（北京时间周一到周日）还没写的竞品就写上，周一凌晨起就有上周的汇总。
+- 模型步骤“竞品周汇总”（环境变量 `COMPETITOR_WEEKLY_MODEL`），默认用 `LLM_*`。模型只写文字，写哪些条目由规则决定；引用不存在的条目、写出条目里没有的名称或数字的句子会被丢掉。写作要求在 `industry/prompts/competitor-weekly.md`。
+- 竞品名单在 `modules/competitor-weekly/backend/compose.ts` 的 `COMPETITORS`。
+- 管理员可以重写某一周，也可以写本周至今（开会前看一眼）：登录后台后 `POST /api/admin/competitor-weekly/compose`，body 为 `{"week": "2026-W45", "reason": "重写原因"}`，请求头带 `x-csrf-token`（`/api/admin/me` 返回的 `csrf`）。
+
 ## 在本机跑起来
 
 需要 Docker（Docker Desktop 或 OrbStack）。在仓库根目录：

@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS competitor_weekly (week text NOT NULL, entity_id text NOT NULL, summary text, highlights jsonb NOT NULL DEFAULT '[]', item_ids text[] NOT NULL DEFAULT '{}', item_count integer NOT NULL DEFAULT 0, model text, receipt_id bigint, generated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (week, entity_id))
