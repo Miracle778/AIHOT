@@ -40,6 +40,7 @@
 - `industry/selection.ts`：“全部动态”的展示下限 `browseFloor` 设为 0。竞品分析要能查全：精选负责挑重点，全部动态什么都能查到。
   - 写标题时，只有版本号的更新日志要写出产品名和最重要的变化。
   - 术语上 Agent、Harness、Skills 保留英文。
+- `site/site.ts`：精选和全部动态上方的筛选按竞品产品分（`FEED_FILTERS`，按标签筛，地址里是 `?tag=`），不再按内容类别；按类别筛的地址仍然有效。
 - `site/site.ts`：站名 AgentHot，行业词“竞品”（页面上显示“竞品日报”“竞品动态”），MCP 工具前缀 `agenthot_`。报头字（`site/brand/nameplates/`）已重新生成。
 
 ## 竞品周汇总（modules/competitor-weekly）

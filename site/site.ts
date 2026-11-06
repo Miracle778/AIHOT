@@ -115,6 +115,23 @@ export const POLICY = {
   xPostIsFullText: true,
 } as const;
 
+/**
+ * 精选和全部动态上方那一排筛选。空数组是默认：“一手”加各个类别（industry/taxonomy.ts 的 CATEGORIES）。
+ * 列出 { label, tag } 就换成按标签筛（地址里是 ?tag=），比如按产品或公司：tag 是资料上的标签
+ * （taxonomy 的实体标签或主题标签），label 是按钮上的字。按类别筛的地址（?category=）仍然有效。
+ */
+export const FEED_FILTERS: ReadonlyArray<{ label: string; tag: string }> = [
+  { label: "Claude Code", tag: "Claude Code" },
+  { label: "Codex", tag: "Codex" },
+  { label: "Copilot", tag: "GitHub Copilot" },
+  { label: "Cursor", tag: "Cursor" },
+  { label: "Qoder", tag: "Qoder" },
+  { label: "CodeBuddy", tag: "CodeBuddy" },
+  { label: "Trae", tag: "Trae" },
+  { label: "opencode", tag: "opencode" },
+  { label: "Pi", tag: "Pi" },
+];
+
 /** 导航（电脑侧栏、手机底栏、“我的”页）。 */
 export const NAV = {
   /**

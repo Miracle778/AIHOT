@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import { CATEGORY_KEYS, CATEGORY_LABELS, CHANNEL_LABELS, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
-import { SITE } from "@aihot/site";
+import { FEED_FILTERS, SITE } from "@aihot/site";
 import { IconClose, IconFilter, IconSearch } from "../../components/icons";
 import { PillTabs } from "../../components/ui/Tabs";
 import { ChoiceTick, Sheet, sheetChoice } from "../../components/ui/Sheet";
@@ -27,9 +27,16 @@ function hrefWith(base: string, params: URLSearchParams, patch: Record<string, s
 /**
  * The feed's one filter (精选 and 全部动态 alike): none, 一手, or a category. One choice at a time: picking
  * 一手 clears the category and picking a category clears 一手. Older 资讯 / X links still filter; the
- * choice then shows as none.
+ * choice then shows as none. A site listing FEED_FILTERS filters by those tags instead; choosing one
+ * clears the others, as the category choice does.
  */
 function filterOptions(base: string, params: URLSearchParams, noneLabel: string) {
+  if (FEED_FILTERS.length) {
+    return [
+      { key: "all", label: noneLabel, to: hrefWith(base, params, { category: null, channel: null, tag: null }) },
+      ...FEED_FILTERS.map((f) => ({ key: `tag:${f.tag}`, label: f.label, to: hrefWith(base, params, { tag: f.tag, category: null, channel: null }) })),
+    ];
+  }
   return [
     { key: "all", label: noneLabel, to: hrefWith(base, params, { category: null, channel: null }) },
     { key: "firstParty", label: CHANNEL_LABELS.firstParty, to: hrefWith(base, params, { category: null, channel: "firstParty" }) },
@@ -37,14 +44,20 @@ function filterOptions(base: string, params: URLSearchParams, noneLabel: string)
   ];
 }
 
-function filterKey(category: CategoryKey | null, channel: ChannelKey): string {
+/** The site's tag filter in use, if the tag in the address is one of FEED_FILTERS. */
+export function feedFilterOf(tag: string | null) {
+  return tag ? FEED_FILTERS.find((f) => f.tag === tag) ?? null : null;
+}
+
+function filterKey(category: CategoryKey | null, channel: ChannelKey, tag: string | null = null): string {
+  if (FEED_FILTERS.length) return feedFilterOf(tag) ? `tag:${tag}` : "all";
   return channel === "firstParty" ? "firstParty" : (category ?? "all");
 }
 
 /** Desktop: the filter as a row of tabs beside the search field. */
 export function CategoryTabs({ base, category, channel = "all", layoutId, className = "" }: { base: string; category: CategoryKey | null; channel?: ChannelKey; layoutId: string; className?: string }) {
   const [params] = useSearchParams();
-  return <PillTabs items={filterOptions(base, params, "全部").map(o => ({ ...o, prefetchOnPress: true }))} active={filterKey(category, channel)} layoutId={layoutId} label="筛选" className={className} />;
+  return <PillTabs items={filterOptions(base, params, "全部").map(o => ({ ...o, prefetchOnPress: true }))} active={filterKey(category, channel, params.get("tag"))} layoutId={layoutId} label="筛选" className={className} />;
 }
 
 /**
@@ -55,7 +68,8 @@ export function FeedBar({ base, category, channel }: { base: "/" | "/all"; categ
   const [params] = useSearchParams();
   const [sheet, setSheet] = useState(false);
   const scope = (to: string) => hrefWith(to, params, { q: null, tab: null, search: null });
-  const filtered = filterKey(category, channel) !== "all";
+  const active = filterKey(category, channel, params.get("tag"));
+  const filtered = active !== "all";
   return (
     <>
       <PhoneBar
@@ -86,7 +100,7 @@ export function FeedBar({ base, category, channel }: { base: "/" | "/all"; categ
           </>
         }
       />
-      <FilterSheet open={sheet} onClose={() => setSheet(false)} base={base} active={filterKey(category, channel)} />
+      <FilterSheet open={sheet} onClose={() => setSheet(false)} base={base} active={active} />
     </>
   );
 }
@@ -123,6 +137,7 @@ export function ActiveFilters({ base, category, channel, tag }: { base: string; 
   const [params] = useSearchParams();
   const label = channel === "firstParty" ? CHANNEL_LABELS.firstParty : category ? CATEGORY_LABELS[category] : null;
   if (!label && !tag) return null;
+  const tagFilter = feedFilterOf(tag);
   const chip = "inline-flex min-h-11 max-w-full items-center gap-1 rounded-full bg-accent-soft pl-3 pr-2 text-[13px] font-medium text-accent transition-opacity active:opacity-60";
   return (
     <div className="flex flex-wrap gap-2 pb-3 pt-1 lg:hidden">
@@ -133,8 +148,8 @@ export function ActiveFilters({ base, category, channel, tag }: { base: string; 
         </Link>
       )}
       {tag && (
-        <Link to={hrefWith(base, params, { tag: null })} aria-label={`取消标签：${tag}`} className={chip}>
-          <span className="truncate">#{tag}</span>
+        <Link to={hrefWith(base, params, { tag: null })} aria-label={`取消${tagFilter ? "筛选" : "标签"}：${tagFilter?.label ?? tag}`} className={chip}>
+          <span className="truncate">{tagFilter ? `只看${tagFilter.label}` : `#${tag}`}</span>
           <IconClose size={14} strokeWidth={2} className="shrink-0" />
         </Link>
       )}
