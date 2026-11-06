@@ -32,7 +32,7 @@ concurrency:
 jobs:
   windows:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       # windows-latest 预装了 PostgreSQL（服务默认停用，postgres 用户的密码是 root）。
       DATABASE_URL: postgres://postgres:root@127.0.0.1:5432/agenthot_ci
@@ -55,6 +55,8 @@ jobs:
           $svc = Get-Service -Name "postgresql*"
           Set-Service -InputObject $svc -Status running -StartupType automatic
           & "$env:PGBIN\psql" --version
+          # pg_dump 等命令行工具（安装包默认不放进 PATH）
+          Add-Content -Path $env:GITHUB_PATH -Value $env:PGBIN
       - name: Install
         run: npm ci --no-audit --no-fund
       - name: Typecheck
@@ -64,7 +66,13 @@ jobs:
       - name: Standalone tests
         run: npm run test:standalone
       - name: Backend tests
-        run: npm test
+        # 跳过只在 Linux 上成立的三个文件：备份（打包用 tar）和两项优雅停机（向进程发 SIGTERM，
+        # Windows 没有这个信号，进程直接结束，见 docs/windows.md 的 pm2 一节）。其余与 npm test 相同。
+        run: |
+          $skip = "backup.test.ts", "analyze-shutdown.test.ts", "translate-shutdown.test.ts"
+          $files = @(Get-ChildItem tests -Filter *.test.ts) + @(Get-ChildItem modules/*/tests -Filter *.test.ts) |
+            Where-Object { $skip -notcontains $_.Name } | ForEach-Object { Resolve-Path -Relative $_.FullName }
+          node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test --test-concurrency=6 --test-timeout=120000 @files
 
       - name: Start api, worker and web
         env:
