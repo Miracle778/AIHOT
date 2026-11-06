@@ -30,6 +30,7 @@ const provider = await stub(() => {
       { text: "成本报表支持按团队查看", items: [2] },
       { text: "接入 Gemini 9 Ultra 模型", items: [1] },
       { text: "只引用了不存在的条目", items: [9] },
+      { text: "成本报表接入新入口，但条目未披露具体范围", items: [2] },
     ],
   };
   return { id: `stub-${calls}`, model: "stub", choices: [{ message: { content: JSON.stringify(content) } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } };

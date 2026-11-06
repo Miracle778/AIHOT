@@ -72,13 +72,17 @@ export function digestPrompt(entityId: string, week: string, items: WeekItem[]) 
   };
 }
 
-/** 模型的回答里能用的部分：引用的编号要真实存在，文字不能写出条目里没有的名称和数字。 */
+/** 说的是材料本身而不是竞品的句子（“条目未披露细节”），写作要求里不让写，模型仍会写。 */
+const ABOUT_THE_MATERIAL = /未(?:披露|说明|提及|公开|给出)|不详|尚不清楚|无法确定|条目(?:中|里)?没有/;
+
+/** 模型的回答里能用的部分：引用的编号要真实存在，文字不能写出条目里没有的名称和数字，也不能是对材料本身的说明。 */
 export function usableDigest(data: z.infer<typeof DigestSchema>, items: WeekItem[]) {
   const corpus = items.map((it) => `${it.title} ${it.summary}`).join("\n");
-  const summary = data.summary.trim() && grounded(data.summary, corpus) ? data.summary.trim() : null;
+  const usable = (text: string) => !!text && grounded(text, corpus) && !ABOUT_THE_MATERIAL.test(text);
+  const summary = usable(data.summary.trim()) ? data.summary.trim() : null;
   const highlights = data.highlights
     .map((h) => ({ text: h.text.trim(), items: [...new Set(h.items)].filter((n) => n >= 1 && n <= items.length).map((n) => items[n - 1]!.id) }))
-    .filter((h) => h.text && h.items.length > 0 && grounded(h.text, corpus))
+    .filter((h) => h.items.length > 0 && usable(h.text))
     .slice(0, MAX_HIGHLIGHTS);
   return { summary, highlights };
 }
