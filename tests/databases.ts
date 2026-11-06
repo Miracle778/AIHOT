@@ -7,6 +7,7 @@
 // *.standalone.test.ts need no database copy; npm run test:standalone runs them without a database.
 import "./setup.ts";
 import { execFileSync } from "node:child_process";
+import { randomInt } from "node:crypto";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -64,7 +65,9 @@ if (process.env.NODE_TEST_CONTEXT && isMainThread) {
   if (process.argv[1]?.endsWith(".standalone.test.ts")) {
     await import("./standalone.ts");
   } else {
-    const copy = `${name}_f${process.pid}_${suffix}`;
+    // The pid alone repeats within a run on Windows, which reuses process ids quickly, while the copies
+    // stay until the run ends; random digits after it keep the names apart (copyPattern still matches).
+    const copy = `${name}_f${process.pid}${randomInt(1_000_000).toString().padStart(6, "0")}_${suffix}`;
     await onServer((db) => db`CREATE DATABASE ${db(copy)} TEMPLATE ${db(name)}`);
     process.env.DATABASE_URL = urlOf(copy);
   }
