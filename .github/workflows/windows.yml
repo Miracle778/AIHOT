@@ -1,0 +1,83 @@
+# 在 Windows 上直接运行（不用 Docker、不用 WSL）的检查：装依赖、类型检查、构建网页、后端测试，
+# 再用 Windows 自带的 PostgreSQL 起 api、worker 和 web，跑站点冒烟检查。
+# 只用 GitHub 自己的 action，按完整 commit SHA 固定。
+name: Windows
+
+on:
+  push:
+    branches: [codeagent-intel]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      # windows-latest 预装了 PostgreSQL（服务默认停用，postgres 用户的密码是 root）。
+      DATABASE_URL: postgres://postgres:root@127.0.0.1:5432/agenthot_ci
+      SITE_URL: http://127.0.0.1:3000
+      API_BASE_URL: http://127.0.0.1:3001
+      SESSION_SECRET: ci-session-secret-0123456789abcdef
+      IMG_PROXY_SIGN_SECRET: ci-img-secret-0123456789abcdef
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Start PostgreSQL
+        run: |
+          $svc = Get-Service -Name "postgresql*"
+          Set-Service -InputObject $svc -Status running -StartupType automatic
+          & "$env:PGBIN\psql" --version
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build web
+        run: npm run build -w @aihot/web
+      - name: Standalone tests
+        run: npm run test:standalone
+      - name: Backend tests
+        run: npm test
+
+      - name: Start api, worker and web
+        env:
+          COLLECT_ENABLED: "false"
+          MODEL_CALLS_ENABLED: "false"
+        run: |
+          $logs = $env:RUNNER_TEMP
+          Start-Process node -ArgumentList "apps/api/src/main.ts" -RedirectStandardOutput "$logs/api.log" -RedirectStandardError "$logs/api.err" -NoNewWindow
+          Start-Process node -ArgumentList "apps/worker/src/main.ts" -RedirectStandardOutput "$logs/worker.log" -RedirectStandardError "$logs/worker.err" -NoNewWindow
+          $env:NODE_ENV = "production"
+          Start-Process node -ArgumentList "server.ts" -WorkingDirectory "apps/web" -RedirectStandardOutput "$logs/web.log" -RedirectStandardError "$logs/web.err" -NoNewWindow
+          for ($i = 0; $i -lt 90; $i++) {
+            try { Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3000/api/health | Out-Null; break } catch { Start-Sleep -Seconds 1 }
+          }
+      - name: Smoke check of the built site
+        run: |
+          node scripts/smoke.ts --base http://127.0.0.1:3000
+          node scripts/mcp-check.ts http://127.0.0.1:3000/api/mcp
+      - name: Worker is still running
+        run: |
+          Start-Sleep -Seconds 20
+          $worker = Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.CommandLine -like "*apps/worker/src/main.ts*" }
+          if (-not $worker) { Get-Content "$env:RUNNER_TEMP/worker.log", "$env:RUNNER_TEMP/worker.err" -Tail 60; throw "worker exited" }
+      - name: Server logs
+        if: always()
+        run: |
+          foreach ($f in "api.log", "api.err", "worker.log", "worker.err", "web.log", "web.err") {
+            $p = Join-Path $env:RUNNER_TEMP $f
+            if (Test-Path $p) { Write-Output "== $f"; Get-Content $p -Tail 40 }
+          }
