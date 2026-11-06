@@ -17,6 +17,22 @@ const older = section("h_older", "September 25, 2026", "Build plugins", "Create 
 const newest = section("h_newest", "September 28, 2026", "A model launch", 'A new model is available. <a href="/docs/new">Read about it</a>.');
 let prepend = false;
 const server = http.createServer((req, res) => {
+  if (req.url === "/keep-a-changelog.md") {
+    res.setHeader("content-type", "text/plain");
+    res.end(`# Changelog\n\n## [Unreleased]\n\n- Pending work.\n\n## [2.1.0] - 2026-11-04\n\n### Added\n\n- **Plan mode**: see [the guide](/docs/plan).\n\n## [2.0.9] - 2026-11-02\n\n### Fixed\n\n- A crash on start.\n`);
+    return;
+  }
+  if (req.url === "/mintlify") {
+    res.setHeader("content-type", "text/html");
+    const update = (id: string, label: string, description: string, body: string) =>
+      `<div id="${id}"><div><div class="absolute"><a href="#${id}">#</a></div><div data-component-part="update-label">${label}</div>` +
+      `<div data-component-part="update-description">${description}</div></div><div><div data-component-part="update-content">${body}</div></div></div>`;
+    res.end(`<html><body><h1>Changelog</h1>` +
+      update("november-5-2026", "November 5, 2026", "App 0.5.5", `<h3>Documents</h3><ul><li>Adds a <a href="/docs/word">Word plugin</a>.</li></ul>`) +
+      update("november-3-2026", "November 3, 2026", "App 0.5.3", `<h4>Fixes</h4><ul><li>Fixed loading.</li></ul>`) +
+      `<footer>Site footer</footer></body></html>`);
+    return;
+  }
   if (req.url === "/notes.md") {
     res.setHeader("content-type", "text/markdown");
     res.end(`# Release notes\n\n## November 2, 2026 {% id="11-02-2026" %}\n\n**Model deprecation:** Migrate to [the replacement](/docs/models/new).\n\n## October 30, 2026 {% id="10-30-2026" %}\n\nComputer use is generally available.\n`);
@@ -58,6 +74,31 @@ test("Markdown changelog sections keep explicit anchors, publication days and se
   assert.match(items[0]!.bodyText!, /Model deprecation/);
   assert.doesNotMatch(items[0]!.bodyText!, /Computer use|Release notes/);
   assert.match(items[1]!.bodyText!, /Computer use is generally available/);
+});
+
+test("Mintlify changelog updates keep their anchors, dates, version titles and separate bodies", async () => {
+  const draft = { config: { url: base + "/mintlify", baseUrl: base + "/changelog", parseMode: "mintlify_changelog", preserveUrlFragment: true } } as never;
+  assert.deepEqual(unsupportedConfig("web_list", (draft as { config: Record<string, unknown> }).config), []);
+  const items = await fetchWebList(draft);
+  assert.deepEqual(items.map(item => [item.url, item.title, item.publicationTime, item.bodyStatus]), [
+    [base + "/changelog#november-5-2026", "App 0.5.5 · Documents", "2026-11-05", "ok"],
+    [base + "/changelog#november-3-2026", "App 0.5.3", "2026-11-03", "ok"],
+  ]);
+  assert.notEqual(items[0]!.identityKey, items[1]!.identityKey);
+  assert.match(items[0]!.bodyHtml!, new RegExp(`href="${base}/docs/word"`));
+  assert.doesNotMatch(items[0]!.bodyText!, /Fixed loading|Site footer/);
+});
+
+test("Keep a Changelog releases are dated sections; the unreleased one is skipped", async () => {
+  const draft = { config: { url: base + "/keep-a-changelog.md", baseUrl: base + "/blob/CHANGELOG.md", parseMode: "keep_a_changelog", preserveUrlFragment: true, publishedAtUtcOffset: "+08:00" } } as never;
+  assert.deepEqual(unsupportedConfig("web_list", (draft as { config: Record<string, unknown> }).config), []);
+  const items = await fetchWebList(draft);
+  assert.deepEqual(items.map(item => [item.url, item.title, item.publicationTime]), [
+    [base + "/blob/CHANGELOG.md#v2.1.0", "2.1.0", "2026-11-04"],
+    [base + "/blob/CHANGELOG.md#v2.0.9", "2.0.9", "2026-11-02"],
+  ]);
+  assert.match(items[0]!.bodyHtml!, new RegExp(`href="${base}/docs/plan"`));
+  assert.doesNotMatch(items[0]!.bodyText!, /crash|Pending/);
 });
 
 test("dates require a real complete calendar day, never a product version or an impossible day", () => {

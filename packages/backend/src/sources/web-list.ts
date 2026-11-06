@@ -286,6 +286,61 @@ function fromMarkdownChangelog(markdown: string, base: string, source: SourceRow
   return out;
 }
 
+/**
+ * Mintlify changelogs mark each update's date, description and content with data-component-part; the
+ * update's container carries the anchor. The title is the description ("Qoder 0.4.9") and the update's
+ * first heading, so a version with only fixes still reads as that version.
+ */
+function fromMintlifyChangelog(html: string, base: string, source: SourceRow): Candidate[] {
+  const $ = cheerio.load(html);
+  const out: Candidate[] = [];
+  $('[data-component-part="update-content"]').each((_i, node) => {
+    const content = $(node);
+    const update = content.parents("[id]").first();
+    const id = update.attr("id");
+    if (!id) return;
+    const label = collapseWhitespace(update.find('[data-component-part="update-label"]').first().text());
+    const description = collapseWhitespace(update.find('[data-component-part="update-description"]').first().text());
+    const heading = collapseWhitespace(content.find("h2, h3").first().text());
+    const date = readPublicationDate(label, source.config.publishedAtUtcOffset ?? "+00:00");
+    const bodyHtml = sanitizeBody(content.html() ?? "", base);
+    const bodyText = stripTags(bodyHtml);
+    if (!date.publishedAt || !bodyText.trim()) return;
+    const url = `${base.replace(/#.*$/, "")}#${id}`;
+    if (!allowed(url, source)) return;
+    const title = [description, heading].filter(Boolean).join(" · ") || label;
+    out.push({ url, identityKey: identityKeyForUrl(url, { keepFragment: true })!, title, ...date, bodyHtml, bodyText, bodyStatus: "ok" });
+  });
+  return out;
+}
+
+/** A Keep a Changelog release heading: "[2.180.0] - 2026-11-04", "v1.2.0 (2026-11-04)". Unreleased has no date. */
+const RELEASE_HEADING = /^\[?v?([\w.+-]+?)\]?(?:\([^)]*\))?\s*(?:[-–—]\s*|\(\s*)(\d{4}-\d{2}-\d{2})\)?\s*$/;
+
+/** A Markdown changelog in the Keep a Changelog shape: one dated release per level-2 heading. */
+function fromKeepAChangelog(markdown: string, base: string, source: SourceRow): Candidate[] {
+  const tokens = marked.lexer(markdown);
+  const out: Candidate[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const heading = tokens[i]!;
+    if (heading.type !== "heading" || heading.depth !== 2) continue;
+    const m = RELEASE_HEADING.exec(heading.text.trim());
+    if (!m) continue;
+    let end = i + 1;
+    while (end < tokens.length && !(tokens[end]!.type === "heading" && (tokens[end] as { depth: number }).depth <= 2)) end++;
+    const bodyHtml = sanitizeBody(marked.parser(tokens.slice(i + 1, end), { async: false }), base);
+    const bodyText = stripTags(bodyHtml);
+    if (!bodyText.trim()) continue;
+    const url = `${base.replace(/#.*$/, "")}#v${m[1]}`;
+    if (!allowed(url, source)) continue;
+    out.push({
+      url, identityKey: identityKeyForUrl(url, { keepFragment: true })!, title: m[1]!,
+      ...readPublicationDate(m[2], source.config.publishedAtUtcOffset), bodyHtml, bodyText, bodyStatus: "ok",
+    });
+  }
+  return out;
+}
+
 async function fetchScript(url: string): Promise<string> {
   return requireOk(await guardedFetch(url, { timeoutMs: 25_000 }), url).text();
 }
@@ -363,6 +418,8 @@ export async function fetchWebList(source: SourceRow): Promise<Candidate[]> {
   else if (mode === "docusaurus_changelog") out = fromDocusaurusChangelog(text, base, source);
   else if (mode === "markdown_changelog") out = fromMarkdownChangelog(text, base, source);
   else if (mode === "intercom_changelog") out = fromIntercomChangelog(text, base, source);
+  else if (mode === "mintlify_changelog") out = fromMintlifyChangelog(text, base, source);
+  else if (mode === "keep_a_changelog") out = fromKeepAChangelog(text, base, source);
   else out = fromHtml(text, base, source);
   if (out.length === 0) throw new FetchError(`no items matched (${mode})`);
   return out;

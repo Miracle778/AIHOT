@@ -6,7 +6,8 @@
    - Token / tokens = 模型 token（保留英文；绝不译"代币"/"令牌"）
    - Transformer = Transformer 架构（保留英文；不译"变压器"）
    - Diffusion = 扩散模型（AI 生成，不是物理扩散）
-   - Agent / Agentic = AI 智能体 / 智能体的（不译"代理人"/"中介"）
+   - Agent / Agentic = Agent / Agent 式（保留英文，例如“编码 Agent”“Agent 模式”；不译"代理人"/"中介"，也不译“智能体”）
+   - Subagent = 子 Agent；Harness = Harness（保留英文，指 Agent 的运行框架）；Changelog / Release notes = 更新日志 / 发布说明
    - Alignment = 对齐（AI 安全语境）
    - Inference = 推理（模型生成）
    - Reasoning = 推理（注意：与 inference 都译"推理"，必要时用"链式推理"区分 CoT；reasoning model 指 o1/o3/R1 这类思考型模型）
@@ -17,7 +18,7 @@
    - Pretrain / Pretraining = 预训练
    - Context window = 上下文窗口
    - Prompt = 提示词
-   - Skill / Skills = 技能（Claude 等 Agent 框架的能力包，不译"特长"）
+   - Skill / Skills = Skills（Claude 等 Agent 框架的能力包，保留英文，不译"特长"）
 
 2. 以下专有名词**一律保留英文原文**，不翻译不加中文括注：
    - AI 公司：OpenAI / Anthropic / Google DeepMind / xAI / Meta AI / Mistral / DeepSeek / Cohere / HuggingFace（HF）/ Runway / ElevenLabs / Suno / Pika / Midjourney / Perplexity
@@ -29,7 +30,7 @@
      **规则**：任何 2-5 字母的全大写缩写，默认按 AI/ML 含义保留英文
    - 评测基准（举例 + 通用规则）：MMLU / GPQA / HumanEval / SWE-bench / SWE-bench Verified / AIME / HLE / ARC-AGI / ARC-AGI 2 / MT-Bench / Chatbot Arena / Aider Polyglot / LiveCodeBench
      **规则**：以 -bench / -eval 结尾或全大写的评测名一律保留英文
-   - AI 工具/产品：Cursor / Copilot / Codex / Aider / Devin / Cline / Claude Code / Windsurf / Zed / v0 / Bolt / Lovable / Replit Agent
+   - AI 编程工具/产品：Cursor / Copilot / Codex / Claude Code / Qoder / Quest / CodeBuddy / WorkBuddy / Trae / SOLO / opencode / Pi / Kiro / Windsurf / Cline / Aider / Devin / Zed / Replit Agent
    - Agent 框架：LangChain / LangGraph / LlamaIndex / CrewAI / AutoGen / Pydantic AI / Vercel AI SDK / DSPy
    - 推理/部署：Ollama / vLLM / SGLang / TensorRT / Triton / CUDA / ROCm
    - 通用技术：API / SDK / CLI / IDE / SaaS / CDN / SSO / OAuth / JWT / WebSocket / SSE / gRPC

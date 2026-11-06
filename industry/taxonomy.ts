@@ -12,12 +12,13 @@
  * feedLabel 是分类 RSS 标题里的名字（不写就用 label）。公开接口、RSS 和 MCP 里要把一类并进另一类发布，写在站点设置里（site/site.ts 的 PUBLIC_CATEGORIES）。
  */
 export const CATEGORIES = [
-  { key: "ai-models", tagColor: "indigo", label: "模型", feedLabel: "AI 模型", section: "模型发布/更新", guide: "模型本身的发布、版本、权重开放、能力或价格变化，以及既有榜单上的模型成绩。公布一次跑分不是发布新基准，也不是教程。" },
-  { key: "ai-products", tagColor: "turquoise", label: "产品", feedLabel: "AI 产品", section: "产品发布/更新", guide: "可使用的 AI 产品、功能、应用、工具、API、平台和工程组件的发布更新。模型厂商发布的推理框架、算子库、硬件适配组件仍是产品，不能因为厂商名归成模型。" },
-  { key: "industry", tagColor: "orange", label: "行业", feedLabel: "行业动态", section: "行业动态", guide: "已发生的公司经营、融资并购、人事、合作、诉讼、政策、真实安全事故及调查进展。新闻由当事人发帖、带有态度，也不因此变成观点。" },
-  { key: "paper", tagColor: "violet", label: "论文", feedLabel: "论文", section: "论文研究", guide: "以新研究方法、实验设计与发现为核心的论文、技术报告、新基准或研究数据集。系统性红队实验属于研究；既有榜单成绩归模型，真实事故的新闻调查归行业。" },
-  { key: "tip", tagColor: "green", label: "教程", section: "技巧与观点", guide: "读者可以照着使用的方法、提示词、工具用法、工程实践复盘与技术讲解。重点是可复用的做法；单纯发布工具归产品，只有态度和预测而无做法归观点。", commentary: true },
-  { key: "opinion", tagColor: "purple", label: "观点", section: "技巧与观点", guide: "重点是作者的解释、判断、主张、预测、评论或访谈观点。讨论市场不自动归行业，作者是名人不自动归观点。", commentary: true },
+  { key: "products", tagColor: "turquoise", label: "产品", feedLabel: "竞品更新", section: "竞品发布/更新", guide: "编码 Agent 与 AI 编程工具（IDE、插件、CLI、云端 Agent、SDK）的版本发布、新功能、能力变化和下线。纯修复的小版本也归这一类，由评分压低；模型厂商发布的编码工具仍是产品，不能因为厂商名归成模型。" },
+  { key: "models", tagColor: "indigo", label: "模型", feedLabel: "模型", section: "模型发布/更新", guide: "会影响编码 Agent 能力的模型本身：新模型、新版本、权重开放、上下文长度、价格和可用性变化。产品里新接入了一个模型归产品，不归这里。" },
+  { key: "eval", tagColor: "wathet", label: "评测", feedLabel: "评测与基准", section: "评测与研究", guide: "编码能力的评测与对比：SWE-bench、Terminal-Bench 等基准的新成绩与新版本，第三方横评，厂商公布的内部评测数据。以提出新方法为核心的论文归研究。" },
+  { key: "industry", tagColor: "orange", label: "商业", feedLabel: "商业与市场", section: "商业与市场", guide: "定价与套餐调整、免费额度变化、企业版与私有化方案、融资并购、合作与渠道、人事、政策合规，以及真实的安全事故与事后复盘。只是新增功能归产品，即使功能面向企业。" },
+  { key: "paper", tagColor: "violet", label: "研究", section: "评测与研究", guide: "以新方法、实验设计与发现为核心的论文和技术报告，重点是 Agent 架构、上下文工程、工具使用、代码生成与修复、评测方法、Agent 安全。" },
+  { key: "tip", tagColor: "green", label: "实践", section: "实践与观点", guide: "工程实践与技术解读：厂商工程博客讲自家 Agent 怎么做（架构、Harness、上下文、沙箱、评测体系）、最佳实践、迁移与使用方法、真实落地复盘。单纯宣布新功能归产品。", commentary: true },
+  { key: "opinion", tagColor: "purple", label: "观点", section: "实践与观点", guide: "作者对编码 Agent 格局、产品路线、技术方向的判断、预测、评论或访谈。讨论市场不自动归商业，作者是名人不自动归观点。", commentary: true },
 ] as const satisfies ReadonlyArray<{ key: string; tagColor: string; label: string; feedLabel?: string; section: string; guide: string; commentary?: true }>;
 
 /**
@@ -25,10 +26,10 @@ export const CATEGORIES = [
  * category 是类别，tag 是标签，两者都对上才算；unit 接在数字后面。
  * 没有这样一类的行业设成 null，报头就不显示这个数。
  */
-export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "ai-models", tag: "模型发布", unit: "个新模型" };
+export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "products", tag: "产品更新", unit: "次竞品更新" };
 
 /** 周报月报的总述可以直接写、不必在报道里找到出处的行业通用词（小写）。站名会自动算进去。 */
-export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "gpu", "agi", "ceo", "ipo"];
+export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "agent", "ide", "cli", "sdk", "mcp", "ceo"];
 
 /**
  * 内容理解一步给每篇资料判的“内容类型”（写在 prompts/content-understanding.md 里，改了类型要同步改那份提示词）。
@@ -40,58 +41,65 @@ export const ITEM_TYPES = ["model_release", "product_launch", "tool_or_prompt", 
 
 /** 每篇资料的第一个标签必须是这些“分类标签”之一。 */
 export const CATEGORY_TAGS = [
-  "产品更新", "模型发布", "论文/研究", "开源/仓库", "教程/实践", "现象/趋势", "大佬观点", "评测/基准", "安全/对齐", "行业动态", "政策/监管",
-  "非AI/通用工具", "其他",
+  "产品更新", "模型发布", "定价/套餐", "评测/基准", "论文/研究", "开源/仓库", "教程/实践", "行业动态", "安全事故", "大佬观点", "政策/监管", "其他",
 ] as const;
 
-/** 可选的主题标签。 */
+/** 可选的主题标签：竞争力的能力维度。 */
 export const TOPIC_TAGS = [
-  "Agent", "编码", "推理", "多模态", "语音", "视频", "图像生成", "RAG", "端侧", "数据/训练", "搜索", "部署/工程", "开源生态", "具身智能", "MCP/工具调用",
+  "Agent 模式", "多 Agent/子 Agent", "上下文工程", "代码库理解", "代码补全", "代码审查", "MCP/工具调用", "Skills/插件", "终端/CLI", "IDE 集成",
+  "云端/后台 Agent", "沙箱/权限", "企业/私有化", "模型接入", "成本/用量", "多模态", "远程/移动端", "办公场景",
 ] as const;
 
-/** 可选的实体标签（公司、机构、平台）。 */
-export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "DeepMind", "Google", "Meta", "Microsoft", "xAI", "Hugging Face", "GitHub", "arXiv"] as const;
+/** 可选的实体标签（产品、公司、平台）。 */
+export const ENTITY_TAGS = [
+  "Claude Code", "Codex", "GitHub Copilot", "Cursor", "Qoder", "CodeBuddy", "WorkBuddy", "Trae", "opencode", "Pi",
+  "Anthropic", "OpenAI", "Google", "DeepSeek", "智谱", "Qwen",
+] as const;
 
 /** 模型常写的近义词，统一成词表里的写法。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
-  "教程/玩法": "教程/实践", "技巧/最佳实践": "教程/实践", "合作/生态": "行业动态", "融资/收购": "行业动态", "公司动态": "行业动态",
-  合作: "行业动态", 生态: "行业动态", 融资: "行业动态", 收购: "行业动态", 投资: "行业动态", 并购: "行业动态",
-  政策: "政策/监管", 监管: "政策/监管", 法规: "政策/监管", 安全: "安全/对齐", 对齐: "安全/对齐",
+  "教程/玩法": "教程/实践", "技巧/最佳实践": "教程/实践", "工程实践": "教程/实践", "合作/生态": "行业动态", "融资/收购": "行业动态", "公司动态": "行业动态",
+  合作: "行业动态", 生态: "行业动态", 融资: "行业动态", 收购: "行业动态", 投资: "行业动态", 并购: "行业动态", 人事: "行业动态",
+  定价: "定价/套餐", 价格: "定价/套餐", 套餐: "定价/套餐", 订阅: "定价/套餐", 降价: "定价/套餐", 涨价: "定价/套餐",
+  政策: "政策/监管", 监管: "政策/监管", 法规: "政策/监管", 合规: "政策/监管",
+  安全: "安全事故", 事故: "安全事故", 漏洞: "安全事故", 复盘: "安全事故", 提示词注入: "安全事故",
   论文: "论文/研究", 研究: "论文/研究", paper: "论文/研究", papers: "论文/研究",
   "open-source": "开源/仓库", 开源: "开源/仓库", 仓库: "开源/仓库", repo: "开源/仓库",
   教程: "教程/实践", 玩法: "教程/实践", 指南: "教程/实践", 技巧: "教程/实践", 最佳实践: "教程/实践", 实践: "教程/实践",
-  产品: "产品更新", 更新: "产品更新", 发布: "模型发布", 模型: "模型发布", 趋势: "现象/趋势", 现象: "现象/趋势", 观点: "大佬观点",
-  视频生成: "视频", 非ai: "非AI/通用工具", "non-ai": "非AI/通用工具", 通用工具: "非AI/通用工具", 工程工具: "非AI/通用工具",
-  安全扫描: "非AI/通用工具", devops: "非AI/通用工具", 行业: "行业动态", 动态: "行业动态",
+  评测: "评测/基准", 基准: "评测/基准", 榜单: "评测/基准", benchmark: "评测/基准",
+  产品: "产品更新", 更新: "产品更新", 版本: "产品更新", 版本更新: "产品更新", 新功能: "产品更新", 发布: "产品更新",
+  模型: "模型发布", 观点: "大佬观点", 趋势: "大佬观点",
+  Copilot: "GitHub Copilot", "Claude Code CLI": "Claude Code", "Codex CLI": "Codex", "OpenCode": "opencode", TRAE: "Trae",
 };
 
-// ── 公司与主体 ──────────────────────────────────────────────────────────────────────────
+// ── 产品、公司与主体 ────────────────────────────────────────────────────────────────────
 
 /**
  * 公司主题：id → 显示名、卡片上显示的标签（null 表示只用 entity:<id> 归类）、别名。
  * aliases 给结构抽取模型看；orgNames 是这家公司发消息时开头用的组织名（公司、实验室、团队），
  * 在它自己的主题页上读者知道说的是谁，可以省去；otherNames 是公司的其他称呼（官方账号名、子品牌）。
  * 所有这些名字都用来认出说的是哪家公司，比如把事实的主体对到发布方。
+ * 竞品按产品立主体（Claude Code 和 Anthropic 分开），这样产品主题页只收产品本身的动态。
  */
 export const ENTITIES: Record<string, { name: string; displayTag: string | null; aliases: string[]; orgNames?: string[]; otherNames?: string[] }> = {
-  "world-labs": { name: "World Labs", displayTag: null, aliases: ["World Labs"] },
-  "thinking-machines": { name: "Thinking Machines Lab", displayTag: null, aliases: ["Thinking Machines"] },
-  amd: { name: "AMD", displayTag: null, aliases: ["AMD", "Advanced Micro Devices"] },
-  openai: { name: "OpenAI", displayTag: "OpenAI", aliases: ["OpenAI", "ChatGPT", "Sora", "Codex", "GPT"], orgNames: ["OpenAI"], otherNames: ["OpenAI Developers"] },
-  anthropic: { name: "Anthropic", displayTag: "Anthropic", aliases: ["Anthropic", "Claude"], orgNames: ["Anthropic"], otherNames: ["Claude Code"] },
-  google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"], orgNames: ["Google DeepMind", "Google Research", "Google", "DeepMind", "谷歌"], otherNames: ["Google AI", "Google Labs", "Google Cloud"] },
+  "claude-code": { name: "Claude Code", displayTag: "Claude Code", aliases: ["Claude Code"], orgNames: ["Claude Code"] },
+  codex: { name: "Codex", displayTag: "Codex", aliases: ["Codex", "Codex CLI", "Codex app"], orgNames: ["Codex"], otherNames: ["OpenAI Codex"] },
+  copilot: { name: "GitHub Copilot", displayTag: "GitHub Copilot", aliases: ["GitHub Copilot", "Copilot", "Copilot coding agent"], orgNames: ["GitHub"], otherNames: ["Copilot CLI"] },
+  cursor: { name: "Cursor", displayTag: "Cursor", aliases: ["Cursor", "Anysphere"], orgNames: ["Cursor"] },
+  qoder: { name: "Qoder", displayTag: "Qoder", aliases: ["Qoder", "Qoder CLI", "QoderWork"], orgNames: ["Qoder"], otherNames: ["阿里 Qoder"] },
+  codebuddy: { name: "CodeBuddy / WorkBuddy", displayTag: "CodeBuddy", aliases: ["CodeBuddy", "CodeBuddy Code", "WorkBuddy", "腾讯云代码助手"], orgNames: ["CodeBuddy", "腾讯云"], otherNames: ["Tencent WorkBuddy"] },
+  trae: { name: "Trae", displayTag: "Trae", aliases: ["Trae", "TRAE", "Trae SOLO"], orgNames: ["TRAE"] },
+  opencode: { name: "opencode", displayTag: "opencode", aliases: ["opencode", "OpenCode"], orgNames: ["opencode"] },
+  pi: { name: "Pi", displayTag: "Pi", aliases: ["Pi coding agent", "pi-mono"], orgNames: ["Earendil"] },
+  anthropic: { name: "Anthropic", displayTag: "Anthropic", aliases: ["Anthropic", "Claude"], orgNames: ["Anthropic"] },
+  openai: { name: "OpenAI", displayTag: "OpenAI", aliases: ["OpenAI", "ChatGPT", "GPT"], orgNames: ["OpenAI"], otherNames: ["OpenAI Developers"] },
+  google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"], orgNames: ["Google DeepMind", "Google", "DeepMind", "谷歌"], otherNames: ["Gemini CLI", "Jules"] },
   deepseek: { name: "DeepSeek", displayTag: "DeepSeek", aliases: ["DeepSeek", "深度求索"], orgNames: ["DeepSeek", "深度求索"] },
-  qwen: { name: "千问 Qwen", displayTag: null, aliases: ["Qwen", "通义", "阿里"], orgNames: ["通义千问", "通义实验室", "阿里巴巴", "阿里云", "阿里", "Qwen Team", "Qwen", "Alibaba"], otherNames: ["千问", "千问APP", "Alibaba Cloud"] },
-  kimi: { name: "月之暗面 / Kimi", displayTag: null, aliases: ["Kimi", "月之暗面", "Moonshot", "Kimi / 月之暗面"], orgNames: ["Moonshot AI", "月之暗面", "Kimi"] },
-  minimax: { name: "MiniMax", displayTag: null, aliases: ["MiniMax", "海螺"], orgNames: ["MiniMax", "稀宇科技"] },
-  zhipu: { name: "智谱 GLM", displayTag: null, aliases: ["智谱", "GLM", "Z.ai"], orgNames: ["智谱AI", "智谱", "Zhipu AI", "Z.ai"], otherNames: ["Zhipu"] },
-  xai: { name: "xAI", displayTag: "xAI", aliases: ["xAI", "Grok"], orgNames: ["SpaceX Super Intelligence", "SpaceXAI", "SpaceXSI", "xAI"], otherNames: ["Grok Bot"] },
-  meta: { name: "Meta", displayTag: "Meta", aliases: ["Meta", "Llama"], orgNames: ["Meta Superintelligence Labs", "Meta AI", "Meta"], otherNames: ["AI at Meta", "Muse"] },
-  microsoft: { name: "Microsoft", displayTag: "Microsoft", aliases: ["Microsoft", "微软", "Copilot"], orgNames: ["Microsoft Research", "Microsoft AI", "Microsoft", "微软"] },
-  nvidia: { name: "NVIDIA", displayTag: null, aliases: ["NVIDIA", "英伟达"], orgNames: ["NVIDIA", "英伟达"] },
-  "hugging-face": { name: "Hugging Face", displayTag: "Hugging Face", aliases: ["Hugging Face"], orgNames: ["Hugging Face", "HuggingFace"] },
-  cursor: { name: "Cursor", displayTag: null, aliases: ["Cursor", "Anysphere"], orgNames: ["Cursor"] },
-  openrouter: { name: "OpenRouter", displayTag: null, aliases: ["OpenRouter"], orgNames: ["OpenRouter"] },
+  zhipu: { name: "智谱 GLM", displayTag: "智谱", aliases: ["智谱", "GLM", "Z.ai"], orgNames: ["智谱AI", "智谱", "Zhipu AI", "Z.ai"] },
+  qwen: { name: "千问 Qwen", displayTag: "Qwen", aliases: ["Qwen", "通义"], orgNames: ["通义实验室", "Qwen Team", "Qwen"], otherNames: ["Qwen Code"] },
+  microsoft: { name: "Microsoft", displayTag: null, aliases: ["Microsoft", "微软"], orgNames: ["Microsoft", "微软"] },
+  windsurf: { name: "Windsurf", displayTag: null, aliases: ["Windsurf"], orgNames: ["Windsurf"] },
+  kiro: { name: "Kiro", displayTag: null, aliases: ["Kiro"], orgNames: ["Kiro"] },
 };
 
 /**
@@ -99,57 +107,38 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
  * 行业没有这个问题时可以留空数组。
  */
 export const IDENTITY_LEXICON: ReadonlyArray<{ id: string; name: string; patterns: RegExp[] }> = [
-  { id: "openai", name: "OpenAI", patterns: [/openai|chatgpt|\bgpt-?[o\d]|\bsora\b|\bcodex\b/i] },
-  { id: "anthropic", name: "Anthropic", patterns: [/anthropic|\bclaude\b/i, /\b(?:opus|sonnet|haiku)\s*\d+(?:[.\-]\d+)*\b/i, /\bfable\s*\d+(?:[.\-]\d+)*\b|\bmythos\b/i] },
-  { id: "google", name: "Google / Gemini", patterns: [/google|deepmind|\bgemini\b|notebooklm|\bveo\s?\d|\bAlphaFold\b|\bAMIE\b/i] },
-  { id: "deepseek", name: "DeepSeek", patterns: [/deepseek|深度求索/i] },
-  { id: "xai", name: "xAI / Grok", patterns: [/\bxai\b|\bgrok\b/i] },
-  { id: "meta", name: "Meta / Llama", patterns: [/\bMeta\b/, /\bmeta\s?ai\b|\bllama\b/i] },
-  { id: "microsoft", name: "Microsoft / Copilot", patterns: [/microsoft|copilot|微软/i] },
-  { id: "nvidia", name: "NVIDIA", patterns: [/nvidia|英伟达|\bnemotron\b|\bnemo\b|\bblackwell\b|\brubin(?:\s+ultra)?\b|\bcuda\b/i] },
-  { id: "qwen", name: "千问 Qwen", patterns: [/\bqwen|通义|千问/i] },
-  { id: "hugging-face", name: "Hugging Face", patterns: [/hugging\s?face/i] },
+  { id: "claude-code", name: "Claude Code", patterns: [/claude\s?code/i] },
+  { id: "codex", name: "Codex", patterns: [/\bcodex\b/i] },
+  { id: "copilot", name: "GitHub Copilot", patterns: [/copilot/i] },
   { id: "cursor", name: "Cursor", patterns: [/\bCursor\b/] },
-  { id: "kimi", name: "月之暗面 / Kimi", patterns: [/\bkimi\b|月之暗面|\bmoonshot\s?ai\b/i] },
-  { id: "openrouter", name: "OpenRouter", patterns: [/openrouter/i] },
-  { id: "minimax", name: "MiniMax", patterns: [/minimax/i] },
-  { id: "zhipu", name: "智谱 GLM", patterns: [/智谱|\bglm-?[4-9]/i] },
-  { id: "hunyuan", name: "腾讯混元", patterns: [/混元|hunyuan/i] },
-  { id: "doubao", name: "字节豆包", patterns: [/豆包|doubao|字节跳动|bytedance/i] },
-  { id: "mistral", name: "Mistral", patterns: [/mistral/i] },
-  { id: "perplexity", name: "Perplexity", patterns: [/\bPerplexity\b/] },
-  { id: "runway", name: "Runway", patterns: [/\brunway\b/i] },
-  { id: "suno", name: "Suno", patterns: [/\bsuno\b/i] },
-  { id: "midjourney", name: "Midjourney", patterns: [/midjourney/i] },
-  { id: "stability-ai", name: "Stability AI", patterns: [/stability\s?ai/i] },
-  { id: "elevenlabs", name: "ElevenLabs", patterns: [/eleven\s?labs/i] },
-  { id: "vllm", name: "vLLM", patterns: [/\bvllm\b/i] },
-  { id: "ollama", name: "Ollama", patterns: [/\bollama\b/i] },
+  { id: "qoder", name: "Qoder", patterns: [/qoder/i] },
+  { id: "codebuddy", name: "CodeBuddy / WorkBuddy", patterns: [/codebuddy|workbuddy|腾讯云代码助手/i] },
+  { id: "trae", name: "Trae", patterns: [/\btrae\b/i] },
+  { id: "opencode", name: "opencode", patterns: [/\bopen\s?code\b/i] },
+  { id: "pi", name: "Pi", patterns: [/\bpi-mono\b|earendil|\bpi\s+(?:coding\s+)?agent\b/i] },
+  { id: "anthropic", name: "Anthropic", patterns: [/anthropic|\bclaude\b/i, /\b(?:opus|sonnet|haiku)\s*\d+(?:[.\-]\d+)*\b/i] },
+  { id: "openai", name: "OpenAI", patterns: [/openai|chatgpt|\bgpt-?[o\d]/i] },
+  { id: "google", name: "Google / Gemini", patterns: [/google|deepmind|\bgemini\b|\bjules\b/i] },
+  { id: "deepseek", name: "DeepSeek", patterns: [/deepseek|深度求索/i] },
+  { id: "zhipu", name: "智谱 GLM", patterns: [/智谱|\bglm-?[4-9]|\bz\.ai\b/i] },
+  { id: "qwen", name: "千问 Qwen", patterns: [/\bqwen|通义|千问/i] },
+  { id: "microsoft", name: "Microsoft", patterns: [/microsoft|微软/i] },
   { id: "windsurf", name: "Windsurf", patterns: [/windsurf/i] },
-  { id: "devin", name: "Devin", patterns: [/\bdevin\b/i] },
-  { id: "manus", name: "Manus", patterns: [/\bmanus\b/i] },
-  { id: "apple", name: "Apple AI", patterns: [/\bapple\s?(intelligence|silicon|ai)\b|苹果(智能|\s?AI)/i] },
-  { id: "amazon", name: "Amazon / AWS", patterns: [/amazon|\baws\b|亚马逊/i] },
-  { id: "baidu", name: "百度文心", patterns: [/百度|baidu|文心|\bernie\s?bot\b/i] },
+  { id: "kiro", name: "Kiro", patterns: [/\bkiro\b/i] },
 ];
 
-/** 这些域名上的文章，发布方就是对应的公司（托管平台如 GitHub、arXiv 不算）。 */
+/** 这些域名上的文章，发布方就是对应的主体（原文不必再写出它的名字）。 */
 export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: readonly string[] }> = [
   { entityId: "openai", domains: ["openai.com"] },
   { entityId: "anthropic", domains: ["anthropic.com", "claude.com"] },
   { entityId: "google", domains: ["deepmind.google", "ai.google", "blog.google"] },
   { entityId: "deepseek", domains: ["deepseek.com"] },
-  { entityId: "xai", domains: ["x.ai"] },
-  { entityId: "meta", domains: ["ai.meta.com"] },
-  { entityId: "microsoft", domains: ["microsoft.com"] },
-  { entityId: "nvidia", domains: ["nvidia.com"] },
-  { entityId: "qwen", domains: ["qwen.ai"] },
   { entityId: "cursor", domains: ["cursor.com"] },
-  { entityId: "openrouter", domains: ["openrouter.ai"] },
+  { entityId: "qoder", domains: ["qoder.com", "qoder.cn"] },
+  { entityId: "codebuddy", domains: ["codebuddy.ai", "codebuddy.cn", "workbuddy.ai"] },
+  { entityId: "trae", domains: ["trae.ai", "trae.cn"] },
+  { entityId: "zhipu", domains: ["bigmodel.cn", "z.ai"] },
 ];
 
-/** 原文里的这些写法也算提到了对应公司。 */
-export const IDENTITY_CONTEXT_ALIASES: ReadonlyArray<{ entityId: string; pattern: RegExp }> = [
-  { entityId: "meta", pattern: /@AIatMeta\b/i },
-  { entityId: "zhipu", pattern: /\bZhipu(?:\s+AI\b|['’]s\b)/i },
-];
+/** 原文里的这些写法也算提到了对应主体。 */
+export const IDENTITY_CONTEXT_ALIASES: ReadonlyArray<{ entityId: string; pattern: RegExp }> = [];

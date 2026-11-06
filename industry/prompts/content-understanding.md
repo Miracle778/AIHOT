@@ -20,7 +20,7 @@
 
 优先级：发了模型选 model_release；发了工具选 product_launch；发了 Prompt 或方法选 tool_or_prompt；论文优先 research_paper；评测选 tutorial_explainer。原文把发布写成过去的事、本条在讲用法或做演示时，不算本次发布，选 tutorial_explainer。
 
-输出前检查 `itemType` 与第一个分类标签是否自洽：`model_release` 对应“模型发布”，`product_launch` 对应“产品更新”，`research_paper` 对应“论文/研究”，`industry_event` 对应“行业动态”或“政策/监管”，`opinion_analysis` 对应“大佬观点”或“现象/趋势”，`tutorial_explainer` 对应“教程/实践”或“评测/基准”。如果二者冲突，按当前材料的核心事件修正后再输出。
+输出前检查 `itemType` 与第一个分类标签是否自洽：`model_release` 对应“模型发布”，`product_launch` 对应“产品更新”，`research_paper` 对应“论文/研究”，`industry_event` 对应“行业动态”或“政策/监管”，`opinion_analysis` 对应“大佬观点”，`tutorial_explainer` 对应“教程/实践”或“评测/基准”；价格、套餐和额度变化可以用 `product_launch` 或 `industry_event`，首标签用“定价/套餐”。如果二者冲突，按当前材料的核心事件修正后再输出。
 
 ## 作者角色
 
@@ -32,14 +32,14 @@
 
 ## 标签
 
-`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：模型发布、产品更新、开源/仓库、论文/研究、教程/实践、大佬观点、评测/基准、安全/对齐、现象/趋势、行业动态、政策/监管、非AI/通用工具、其他。
+`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：产品更新、模型发布、定价/套餐、评测/基准、论文/研究、开源/仓库、教程/实践、行业动态、安全事故、大佬观点、政策/监管、其他。
 
 其后可选 0–5 个适用标签，并且只能来自以下两个白名单：
 
-- 主题：Agent、编码、推理、多模态、语音、视频、图像生成、RAG、端侧、数据/训练、搜索、部署/工程、开源生态、具身智能、MCP/工具调用
-- 实体：OpenAI、Anthropic、DeepSeek、DeepMind、Google、Meta、Microsoft、xAI、Hugging Face、GitHub、arXiv
+- 主题：Agent 模式、多 Agent/子 Agent、上下文工程、代码库理解、代码补全、代码审查、MCP/工具调用、Skills/插件、终端/CLI、IDE 集成、云端/后台 Agent、沙箱/权限、企业/私有化、模型接入、成本/用量、多模态、远程/移动端、办公场景
+- 实体：Claude Code、Codex、GitHub Copilot、Cursor、Qoder、CodeBuddy、WorkBuddy、Trae、opencode、Pi、Anthropic、OpenAI、Google、DeepSeek、智谱、Qwen
 
-正文中即使明确出现了 NVIDIA、Apple、阿里等其他实体，也不要把它们放进 `tags`。不要创造白名单之外的标签。没有适用的主题或实体时，只返回第一个分类标签；例如学校限制 AI 使用的监管新闻，不需要强行归到“编码”或“推理”。
+正文中即使明确出现了白名单以外的产品或公司，也不要把它们放进 `tags`。不要创造白名单之外的标签。主题标签描述这次变化落在哪个能力维度，一次更新涉及多个维度时只选最主要的一到三个；纯修复版本不需要主题标签。
 
 ## 候选阅读价值
 
@@ -51,7 +51,7 @@
 
 ## 中文标题和摘要
 
-`titleZh` 必须是自洽的中文标题，包含事件主体以及动作或结果。保留必要的模型名、产品名、版本号、机构名和关键数字，不写“最新动态”“引发关注”等空话。原标题已经是中文时也要保证脱离来源名后仍能独立理解。
+`titleZh` 必须是自洽的中文标题，包含事件主体以及动作或结果。保留必要的模型名、产品名、版本号、机构名和关键数字，不写“最新动态”“引发关注”等空话。原标题已经是中文时也要保证脱离来源名后仍能独立理解。原标题只是版本号或日期（更新日志、Release 常见）时，标题写出产品名和这次最重要的一两项变化，例如“CodeBuddy Code 2.180 支持模型下发默认工具模式”，不要只写版本号；只有修复时写“某产品某版本修复若干问题”。
 
 `summaryZh` 必须忠实使用当前材料。短 X 推文完整翻译作者自己的主推文；长推文或文章先写核心事实，再写一层关键细节或影响。保留关键数字、版本、机构、模型和 URL；引用内容只作上下文，不冒充主推作者自己的话。
 
@@ -59,4 +59,4 @@
 
 只返回合法 JSON，不要 Markdown，不要解释。顶层必须且只能包含以下六个字段：
 
-{"itemType":"product_launch","authorRole":"principal","tags":["产品更新","Agent"],"editorialJudgment":"原文给出了能力变化和开放入口，读者可以据此判断它会怎样改变现有工作流。","titleZh":"某产品发布智能体功能","summaryZh":"某产品发布新的智能体功能，给出了开放入口和主要能力变化。"}
+{"itemType":"product_launch","authorRole":"principal","tags":["产品更新","Agent 模式"],"editorialJudgment":"原文给出了能力变化和开放入口，读者可以据此判断它会怎样改变现有工作流。","titleZh":"某产品发布智能体功能","summaryZh":"某产品发布新的智能体功能，给出了开放入口和主要能力变化。"}
