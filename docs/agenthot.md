@@ -14,7 +14,7 @@
 | CodeBuddy | CNB 上 CodeBuddy Code 的 CHANGELOG.md | Markdown，`keep_a_changelog` |
 | opencode | GitHub Releases（只收 `v*`，不收 process-daemon） | RSS |
 | Pi | GitHub Releases | RSS |
-| 上游模型 | Anthropic News、OpenAI News、Google DeepMind | RSS / 网页列表 |
+| 上游模型 | Anthropic News、OpenAI News、Google Developers Blog（Gemini API、Gemini CLI、Jules） | RSS / 网页列表 |
 | 分析与观点 | Simon Willison、Latent Space | RSS |
 
 `mintlify_changelog` 和 `keep_a_changelog` 是这个分支给框架新增的两种解析方式，说明在 [信源](sources.md) 的 `parseMode` 一节。GitHub Releases 的 Atom 只有 `updated`，框架不把它当发布时间，所以这几个源配了 `detail`，从发布页的 `relative-time` 读日期。

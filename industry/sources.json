@@ -315,11 +315,11 @@
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-google-deepmind",
-      "name": "Google DeepMind",
+      "id": "rss-google-developers",
+      "name": "Google Developers Blog",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://deepmind.google/blog/rss.xml",
+        "feedUrl": "https://developers.googleblog.com/rss/",
         "_aihot": {
           "initialBackfillLimit": 8
         }
