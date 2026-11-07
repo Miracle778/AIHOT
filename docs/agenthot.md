@@ -7,7 +7,7 @@
 | 竞品 | 信源 | 方式 |
 |---|---|---|
 | Claude Code | GitHub Releases、Anthropic Engineering、Anthropic News、Claude Blog | RSS / 网页列表 |
-| Codex | Codex Changelog（官方 RSS）、OpenAI News | RSS |
+| Codex | GitHub Releases（去掉 alpha、beta 预发布）、OpenAI News | RSS |
 | GitHub Copilot | GitHub Changelog 的 Copilot 标签、GitHub Blog AI & ML | RSS |
 | Cursor | Cursor Changelog（官方 RSS） | RSS |
 | Qoder | qoder.com/changelog | 网页，`mintlify_changelog` |

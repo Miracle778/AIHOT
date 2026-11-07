@@ -27,11 +27,21 @@
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-codex-changelog",
-      "name": "Codex Changelog",
+      "id": "gh-codex",
+      "name": "Codex（GitHub Releases）",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://developers.openai.com/codex/changelog/rss.xml",
+        "feedUrl": "https://github.com/openai/codex/releases.atom",
+        "detail": {
+          "maxFetches": 10,
+          "publishedAtSelector": "relative-time"
+        },
+        "ingestNoiseFilter": {
+          "dropMarkersTitleOnly": [
+            "alpha",
+            "beta"
+          ]
+        },
         "_aihot": {
           "initialBackfillLimit": 8
         }
@@ -41,7 +51,7 @@
       "participation_mode": "editorial",
       "interval_minutes": 60,
       "tags": [
-        "官方",
+        "开源",
         "版本"
       ],
       "site_fulltext": false,
