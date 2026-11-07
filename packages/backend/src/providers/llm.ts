@@ -75,6 +75,50 @@ export interface ChatJsonResult<T> {
   usage: Record<string, unknown> | null;
 }
 
+/**
+ * The completion object a provider sent. Some OpenAI-compatible gateways answer a request that did not
+ * ask to stream in server-sent-events framing anyway: one `data: {...}` frame holding the whole
+ * completion, or chunks whose deltas make up the answer. Both are read as the one completion; anything
+ * else that is not a JSON object is null (kept as unparsable on the receipt).
+ */
+export function parseCompletion(text: string): Record<string, unknown> | null {
+  const asObject = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
+  try {
+    return asObject(JSON.parse(text));
+  } catch {
+    // not plain JSON; maybe event-stream framing
+  }
+  const frames = text.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).filter((d) => d && d !== "[DONE]");
+  if (!frames.length) return null;
+  const objects: Array<Record<string, unknown>> = [];
+  for (const frame of frames) {
+    let o: Record<string, unknown> | null;
+    try {
+      o = asObject(JSON.parse(frame));
+    } catch {
+      return null;
+    }
+    if (!o) return null;
+    objects.push(o);
+  }
+  type Choice = { message?: unknown; delta?: { content?: string | null }; finish_reason?: string | null };
+  const first = objects[0]!;
+  if (objects.length === 1 && (first.choices as Choice[] | undefined)?.[0]?.message) return first;
+  let content = "";
+  let finish: string | null = null;
+  let usage: unknown = null;
+  let deltas = false;
+  for (const o of objects) {
+    const choice = (o.choices as Choice[] | undefined)?.[0];
+    if (choice?.delta) deltas = true;
+    if (typeof choice?.delta?.content === "string") content += choice.delta.content;
+    if (choice?.finish_reason) finish = choice.finish_reason;
+    if (o.usage) usage = o.usage;
+  }
+  if (!deltas) return null;
+  return { id: first.id, model: first.model, choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: finish }], usage };
+}
+
 function extractJson(text: string): unknown {
   let t = text.trim();
   const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(t);
@@ -208,13 +252,7 @@ async function chatOnce<S extends z.ZodType>(opts: ChatJsonOptions<S>, circuit =
         throw failure;
       }
       if (circuit) await recordModelHealth(spec.service, permit!, false);
-      let json: Record<string, unknown>;
-      try {
-        json = JSON.parse(text);
-        if (!json || typeof json !== "object" || Array.isArray(json)) throw new Error("Expected a response object");
-      } catch {
-        json = { unparsable: text.slice(0, 20000) };
-      }
+      const json = parseCompletion(text) ?? { unparsable: text.slice(0, 20000) };
       const usage = (json.usage as Record<string, unknown> | undefined) ?? null;
       return {
         response: { ...json, _latencyMs: Math.round(performance.now() - started) },

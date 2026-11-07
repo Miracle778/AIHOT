@@ -3,6 +3,7 @@
 // answer cut off at the output limit says so, and the valve stops calls before they are sent.
 import { gate, stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
+import http from "node:http";
 import { after, test } from "node:test";
 import { z } from "zod";
 import { config } from "@aihot/backend/config";
@@ -155,6 +156,41 @@ test("a fully received non-object model response is unusable output, not an unkn
   } finally {
     process.env.DEEPSEEK_BASE_URL = original;
     await malformed.close();
+  }
+});
+
+test("a gateway that frames a non-streaming answer as server-sent events still gives the answer", async () => {
+  const frame = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
+  const bodies = [
+    // one frame holding the whole completion (seen on a company gateway)
+    frame({ id: "sse-1", object: "chat.completion", choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: '{"ok":true}' } }], usage }),
+    // chunks with deltas, ending in [DONE]
+    frame({ id: "sse-2", choices: [{ index: 0, delta: { role: "assistant", content: '{"ok":' } }] }) +
+      frame({ id: "sse-2", choices: [{ index: 0, delta: { content: "true}" }, finish_reason: "stop" }], usage }) + "data: [DONE]\n\n",
+  ];
+  let hit = 0;
+  const server = http.createServer((req, res) => {
+    req.resume();
+    req.on("end", () => {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.end(bodies[hit++]);
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+  const original = process.env.DEEPSEEK_BASE_URL;
+  process.env.DEEPSEEK_BASE_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}/v1`;
+  try {
+    for (const name of ["one-frame", "chunks"]) {
+      const subject = `sse-${name}-${tag()}`;
+      const r = await ask(subject);
+      assert.deepEqual(r.data, { ok: true });
+      const [row] = await sql`SELECT status, response FROM receipts WHERE subject=${subject}`;
+      assert.equal(row!.status, "received", "a usable answer, not unparsable output");
+      assert.deepEqual(row!.response.usage, usage);
+    }
+  } finally {
+    process.env.DEEPSEEK_BASE_URL = original;
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
 
